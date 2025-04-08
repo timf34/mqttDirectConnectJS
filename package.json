@@ -1,15 +1,11 @@
 {
-    "name": "mqtt-direct-test",
+    "name": "field-of-vision-mqtt",
     "version": "1.0.0",
-    "description": "Test direct MQTT connection for Field of Vision devices",
-    "main": "mqtt-direct-test.js",
-    "scripts": {
-      "test": "node mqtt-direct-test.js",
-      "test-aws": "node mqtt-aws-test.js"
-    },
+    "description": "Field of Vision MQTT Publisher",
     "dependencies": {
-      "mqtt": "^4.3.7",
-      "uuid": "^9.0.0",
       "aws-iot-device-sdk": "^2.2.12"
+    },
+    "engines": {
+      "node": ">=14"
     }
   }
