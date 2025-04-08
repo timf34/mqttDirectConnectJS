@@ -1,12 +1,6 @@
 // api/mqtt-publish.js
 const awsIot = require('aws-iot-device-sdk');
 
-// Environment variables configured in Vercel dashboard
-// Note: we have them stored in base64 for Vercel 
-const AWS_IOT_KEY = Buffer.from(process.env.AWS_IOT_KEY_BASE64, 'base64').toString();
-const AWS_IOT_CERT = Buffer.from(process.env.AWS_IOT_CERT_BASE64, 'base64').toString();
-const AWS_IOT_CA = Buffer.from(process.env.AWS_IOT_CA_BASE64, 'base64').toString();
-
 module.exports = async (req, res) => {
   // CORS headers for browser requests
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -25,6 +19,14 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // Get environment variables
+    const AWS_IOT_ENDPOINT = process.env.AWS_IOT_ENDPOINT;
+    
+    // Decode base64 certificates
+    const AWS_IOT_KEY = Buffer.from(process.env.AWS_IOT_KEY_BASE64, 'base64').toString();
+    const AWS_IOT_CERT = Buffer.from(process.env.AWS_IOT_CERT_BASE64, 'base64').toString();
+    const AWS_IOT_CA = Buffer.from(process.env.AWS_IOT_CA_BASE64, 'base64').toString();
+    
     // Validate request body
     const { topic, message } = req.body;
     if (!topic || !message) {
@@ -33,18 +35,25 @@ module.exports = async (req, res) => {
 
     // Create device with environment variables
     const device = awsIot.device({
-      keyPath: AWS_IOT_KEY,
-      certPath: AWS_IOT_CERT,
-      caPath: AWS_IOT_CA,
+      key: AWS_IOT_KEY,       // Changed from keyPath
+      cert: AWS_IOT_CERT,     // Changed from certPath
+      ca: AWS_IOT_CA,         // Changed from caPath
       clientId: `server-${Date.now()}`,
       host: AWS_IOT_ENDPOINT,
-      region: 'eu-west-1' // Change to your region
+      region: 'eu-west-1'
     });
 
     // Wait for device to connect
     await new Promise((resolve, reject) => {
-      device.on('connect', resolve);
-      device.on('error', reject);
+      device.on('connect', () => {
+        console.log('Connected to AWS IoT Core');
+        resolve();
+      });
+      
+      device.on('error', (err) => {
+        console.error('Connection error:', err);
+        reject(err);
+      });
       
       // Add timeout to avoid hanging
       setTimeout(() => reject(new Error('Connection timeout')), 5000);
@@ -52,14 +61,21 @@ module.exports = async (req, res) => {
 
     // Publish message
     await new Promise((resolve, reject) => {
+      console.log(`Publishing to topic ${topic}:`, message);
+      
       device.publish(topic, JSON.stringify(message), { qos: 1 }, (err) => {
-        if (err) reject(err);
-        else resolve();
+        if (err) {
+          console.error('Publish error:', err);
+          reject(err);
+        } else {
+          console.log('Message published successfully');
+          resolve();
+        }
       });
     });
 
     // Disconnect after sending
-    device.end();
+    device.end(false);
 
     return res.status(200).json({ success: true });
   } catch (error) {
