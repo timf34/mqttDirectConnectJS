@@ -23,9 +23,13 @@ module.exports = async (req, res) => {
     const AWS_IOT_ENDPOINT = process.env.AWS_IOT_ENDPOINT;
     
     // Decode base64 certificates
-    const AWS_IOT_KEY = Buffer.from(process.env.AWS_IOT_KEY_BASE64, 'base64').toString();
-    const AWS_IOT_CERT = Buffer.from(process.env.AWS_IOT_CERT_BASE64, 'base64').toString();
-    const AWS_IOT_CA = Buffer.from(process.env.AWS_IOT_CA_BASE64, 'base64').toString();
+    const AWS_IOT_KEY  = Buffer.from(process.env.AWS_IOT_KEY_BASE64,  'base64');
+    const AWS_IOT_CERT = Buffer.from(process.env.AWS_IOT_CERT_BASE64, 'base64');
+    const AWS_IOT_CA   = Buffer.from(process.env.AWS_IOT_CA_BASE64,   'base64');
+    // print the aws iot ca cert decoded
+    // console.log('AWS_IOT_CA:\n', AWS_IOT_CA);
+    // console.log('AWS_IOT_KEY:\n', AWS_IOT_KEY);
+    // console.log('AWS_IOT_CERT:\n', AWS_IOT_CERT);
     
     // Validate request body
     const { topic, message } = req.body;
@@ -33,15 +37,16 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Topic and message are required' });
     }
 
-    // Create device with environment variables
+    // api/mqtt-publish.js
     const device = awsIot.device({
-      key: AWS_IOT_KEY,       // Changed from keyPath
-      cert: AWS_IOT_CERT,     // Changed from certPath
-      ca: AWS_IOT_CA,         // Changed from caPath
-      clientId: `server-${Date.now()}`,
-      host: AWS_IOT_ENDPOINT,
-      region: 'eu-west-1'
+        privateKey: AWS_IOT_KEY,
+        clientCert: AWS_IOT_CERT,
+        caCert: AWS_IOT_CA,
+        clientId: `server-${Date.now()}`,
+        host: AWS_IOT_ENDPOINT,
+        region: 'eu-west-1'
     });
+  
 
     // Wait for device to connect
     await new Promise((resolve, reject) => {
