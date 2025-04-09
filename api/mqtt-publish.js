@@ -22,9 +22,6 @@ module.exports = async (req, res) => {
     // Get environment variables
     const AWS_IOT_ENDPOINT = process.env.AWS_IOT_ENDPOINT;
 
-    console.log(process.env.AWS_IOT_KEY_BASE64);
-    
-    
     // Decode base64 certificates
     const AWS_IOT_KEY  = Buffer.from(process.env.AWS_IOT_KEY_BASE64,  'base64');
     const AWS_IOT_CERT = Buffer.from(process.env.AWS_IOT_CERT_BASE64, 'base64');
